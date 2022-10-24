@@ -1,7 +1,6 @@
 package jpaStudy.ex;
 
-import jpaStudy.ex.entity.Member;
-import jpaStudy.ex.entity.Team;
+import jpaStudy.ex.entity.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +51,22 @@ class ExApplicationTests {
 		team.settingMember(member);
 		em.persist(team);
 		//update쿼리가 왜날아가는지 모르겠다
+	}
+
+	@Test
+	@Transactional
+	public void 식별비식별테스트(){
+		ParentId id = new ParentId(1l, 2l);
+		Parent parent = new Parent(id.getId1(), id.getId2(), "부모이름1");
+		DeIdenChild deIdenChild = new DeIdenChild();
+		deIdenChild.setParent(parent);
+		em.persist(parent);
+		em.persist(deIdenChild);
+		em.flush();
+		em.clear();
+		DeIdenChild findChild = em.find(DeIdenChild.class, deIdenChild.getId());
+		System.out.println(findChild.getParent().getId1() + "   " + findChild.getParent().getId2());
+		//제대로 동작하는군
 	}
 
 
