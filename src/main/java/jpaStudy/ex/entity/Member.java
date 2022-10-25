@@ -18,13 +18,16 @@ public class Member {
     @Column(name = "MEMBER_ID")
     private Long id;
 
-    @Column(unique = true)
+    @Column
     private String name;
 
     @ElementCollection
     @CollectionTable(name = "Address", joinColumns = @JoinColumn(name = "MEMBER_ID"))
     private List<Address> addressList;
 
+    @ManyToOne
+    @JoinColumn(name = "team_id")
+    private Team team;
 
 
 
