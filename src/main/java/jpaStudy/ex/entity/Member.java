@@ -4,6 +4,7 @@ package jpaStudy.ex.entity;
 import lombok.*;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Getter
@@ -20,12 +21,9 @@ public class Member {
     @Column(unique = true)
     private String name;
 
-    @ManyToOne
-    @JoinColumn(name = "team_id")
-    private Team team;
-
-    @Column(nullable = false)
-    private int x;
+    @ElementCollection
+    @CollectionTable(name = "Address", joinColumns = @JoinColumn(name = "MEMBER_ID"))
+    private List<Address> addressList;
 
 
 

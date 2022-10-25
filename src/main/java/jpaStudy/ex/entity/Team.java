@@ -20,16 +20,5 @@ public class Team {
     @Column(unique = true)
     private String name;
 
-    @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name = "team_id")
-    private List<Member> memberList = new ArrayList<>();
-
-    public Team(String name){
-        this.name = name;
-    }
-    public void settingMember(Member member){
-        member.setTeam(this);
-        this.memberList.add(member);
-    }
 
 }
