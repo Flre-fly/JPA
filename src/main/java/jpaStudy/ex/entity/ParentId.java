@@ -5,12 +5,15 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import javax.persistence.Embeddable;
+import javax.persistence.EmbeddedId;
 import java.io.Serializable;
 import java.util.Objects;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
+@Embeddable
 public class ParentId implements Serializable {
     private Long id1;
     private Long id2;

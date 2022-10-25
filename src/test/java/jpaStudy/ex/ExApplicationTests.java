@@ -54,15 +54,16 @@ class ExApplicationTests {
 	}
 
 	@Test
-	@Commit
 	@Transactional
+	@Commit
 	public void 식별비식별테스트(){
-		ChildId id = new ChildId(1L, 2L);
-		IdenChild child = IdenChild.builder().name("child1").child_id(id.getChild_id()).build();
-		Parent parent = new Parent();
-		parent.setId(id.getParent());
-		child.setParent(parent);
+		ParentId id = new ParentId(7l,8l);
+		Parent parent = new Parent(id,"name1");
+		DeIdenChild child = new DeIdenChild();
+		child.setId(5l);
 		em.persist(parent);
+		child.setParent(parent);
+		child.setName("name2");
 		em.persist(child);
 	}
 
