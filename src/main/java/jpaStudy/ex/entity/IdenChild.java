@@ -12,9 +12,13 @@ import javax.persistence.*;
 @NoArgsConstructor
 public class IdenChild {
 
-    @Id
-    private Long child_id;
-    //private ChildId childId; Property of @IdClass not found in entity jpaStudy.ex.entity.IdenChild: child_id
+    @EmbeddedId
+    private ChildId childId;
+
+    @MapsId("parentId")
+    @ManyToOne
+    @JoinColumn(name = "parent_id")
+    private Parent parent;
 
     private String name;
 }

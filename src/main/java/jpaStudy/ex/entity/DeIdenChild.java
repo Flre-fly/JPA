@@ -12,14 +12,5 @@ public class DeIdenChild {
     @Id
     private Long id;
 
-    @JoinColumns({
-            @JoinColumn(name = "id1"),
-            @JoinColumn(name = "id2")
-    }
-    )
-    @ManyToOne
-    private Parent parent;
-
-
     private String name;
 }

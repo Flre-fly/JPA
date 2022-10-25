@@ -13,8 +13,10 @@ import javax.persistence.*;
 @Getter
 @Setter
 public class Parent {
-    @EmbeddedId
-    private ParentId id;
+    @Id
+    @GeneratedValue
+    @Column(name = "parent_id")
+    private Long id;
 
     private String name;
 }

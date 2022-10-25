@@ -57,13 +57,14 @@ class ExApplicationTests {
 	@Transactional
 	@Commit
 	public void 식별비식별테스트(){
-		ParentId id = new ParentId(7l,8l);
-		Parent parent = new Parent(id,"name1");
-		DeIdenChild child = new DeIdenChild();
-		child.setId(5l);
+		Parent parent = new Parent();
+		parent.setName("부모");
 		em.persist(parent);
+		ChildId id = new ChildId(1l, parent.getId());
+		IdenChild child = new IdenChild();
 		child.setParent(parent);
-		child.setName("name2");
+		child.setChildId(id);
+		child.setName("child1");
 		em.persist(child);
 	}
 
