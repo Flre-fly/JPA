@@ -19,4 +19,8 @@ public class Parent {
     private Long id;
 
     private String name;
+
+    @OneToOne
+    @JoinTable(name = "joinTable1", joinColumns = @JoinColumn(name = "parent_id"), inverseJoinColumns = @JoinColumn(name = "child_id"))
+    private Child child;
 }

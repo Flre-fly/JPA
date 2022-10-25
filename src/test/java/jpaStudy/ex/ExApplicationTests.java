@@ -56,16 +56,13 @@ class ExApplicationTests {
 	@Test
 	@Transactional
 	@Commit
-	public void 식별비식별테스트(){
-		Parent parent = new Parent();
-		parent.setName("부모");
-		em.persist(parent);
-		ChildId id = new ChildId(1l, parent.getId());
-		IdenChild child = new IdenChild();
-		child.setParent(parent);
-		child.setChildId(id);
-		child.setName("child1");
-		em.persist(child);
+	public void 일대일조인테이블(){
+		Parent p = new Parent();
+		Child c = new Child();
+		p.setChild(c);
+		em.persist(p);
+		em.persist(c);
+
 	}
 
 
