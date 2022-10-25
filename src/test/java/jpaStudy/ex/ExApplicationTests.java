@@ -56,13 +56,9 @@ class ExApplicationTests {
 	@Test
 	@Transactional
 	@Commit
-	public void 일대일조인테이블(){
-		Parent p = new Parent();
-		Child c = new Child();
-		p.setChild(c);
-		em.persist(p);
-		em.persist(c);
-
+	public void 엔티티하나에여러테이블매핑(){
+		Board board = new Board(1l, "asd", "Asd");
+		em.persist(board);
 	}
 
 
