@@ -54,19 +54,16 @@ class ExApplicationTests {
 	}
 
 	@Test
+	@Commit
 	@Transactional
 	public void 식별비식별테스트(){
-		ParentId id = new ParentId(1l, 2l);
-		Parent parent = new Parent(id.getId1(), id.getId2(), "부모이름1");
-		DeIdenChild deIdenChild = new DeIdenChild();
-		deIdenChild.setParent(parent);
+		ChildId id = new ChildId(1L, 2L);
+		IdenChild child = IdenChild.builder().name("child1").child_id(id.getChild_id()).build();
+		Parent parent = new Parent();
+		parent.setId(id.getParent());
+		child.setParent(parent);
 		em.persist(parent);
-		em.persist(deIdenChild);
-		em.flush();
-		em.clear();
-		DeIdenChild findChild = em.find(DeIdenChild.class, deIdenChild.getId());
-		System.out.println(findChild.getParent().getId1() + "   " + findChild.getParent().getId2());
-		//제대로 동작하는군
+		em.persist(child);
 	}
 
 
