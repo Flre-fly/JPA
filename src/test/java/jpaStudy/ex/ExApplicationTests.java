@@ -157,6 +157,55 @@ class ExApplicationTests {
 			System.out.println(((Member)o[1]).getName());
 		}
 	}
+	@Test
+	@Transactional
+	//회원이름 = 팀이름인 사람 수
+	public void 그냥조인(){
+		setting2();
+		String query = "select count(m.id) from Member m left join m.team t where m.name = t.name";
+		Object obj = em.createQuery(query).getResultList();
+		System.out.println(obj.toString());
+	}
+	@Test
+	@Transactional
+	//회원이름 = 팀이름인 사람 수
+	public void 세타조인(){
+		setting2();
+		String query = "select count(m.id) from Member m, Team t where m.name = t.name";
+		Object obj = em.createQuery(query).getResultList();
+		System.out.println(obj.toString());
+	}
+
+
+	//페치조인을 사용한다는 것은 지연로딩이아니라 그 즉시 member랑 연관된 team을 모두 가져오겠다는의미다
+	//그래서 member.getTeam으로 접근해도 쿼리가 나가지 않을것이다
+	//또한 준영속상태가 되어도 team을 얻어올수있다. 왜냐면프록시객체가 아니니까 초기화과정을 안거쳐도 돼서 초기화과정없이 바로 team조회가 가능하기 때문이다
+	@Test
+	@Transactional
+	public void 페치조인(){
+		setting2();
+		String query = "select m from Member m join fetch m.team";
+		List<Member> members = em.createQuery(query, Member.class).getResultList();
+		for (Member member: members) {
+			System.out.println(member.getName() + " " + member.getTeam().getName());
+		}
+	}
+	@Test
+	@Transactional
+	public void 컬렉션패치조인(){
+		setting2();
+		String query = "select t from Team t join fetch t.members where t.name =:name";
+		List<Team> teams = em.createQuery(query, Team.class).setParameter("name", "a").getResultList();
+		for (Team team:teams) {
+			System.out.println(team.getName());
+			for (Member member:team.getMembers()) {
+				System.out.println(member.getName());
+			}
+			System.out.println("============");
+		}
+	}
+
+
 
 	public void setting(){
 		Team team1 = new Team();
@@ -174,6 +223,30 @@ class ExApplicationTests {
 		member3.setTeam(team2);
 		em.persist(team1);
 		em.persist(team2);
+		em.persist(member1);
+		em.persist(member2);
+		em.persist(member3);
+	}
+
+	public void setting2(){
+		Team team1 = new Team();
+		team1.setName("a");
+		Team team2 = new Team();
+		team2.setName("c");
+		Team team3 = new Team();
+		team3.setName("d");
+		Member member1 = new Member();
+		member1.setName("b");
+		member1.setTeam(team1);
+		Member member2 = new Member();
+		member2.setName("a");
+		member2.setTeam(team2);
+		Member member3 = new Member();
+		member3.setName("d");
+		member3.setTeam(team3);
+		em.persist(team1);
+		em.persist(team2);
+		em.persist(team3);
 		em.persist(member1);
 		em.persist(member2);
 		em.persist(member3);
