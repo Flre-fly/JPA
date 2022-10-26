@@ -25,9 +25,13 @@ public class Member {
     @CollectionTable(name = "Address", joinColumns = @JoinColumn(name = "MEMBER_ID"))
     private List<Address> addressList;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "team_id")
     private Team team;
+
+    @ManyToOne
+    @JoinColumn(name = "group1_id")
+    private Group1 group1;
 
 
 

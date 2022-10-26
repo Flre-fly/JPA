@@ -10,6 +10,7 @@ import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.test.annotation.Commit;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ import java.util.List;
 @SpringBootTest
 class ExApplicationTests {
 
-	@Autowired
+	@PersistenceContext
 	private EntityManager em;
 	@Autowired
 	private MyRepository repository;
@@ -193,9 +194,16 @@ class ExApplicationTests {
 	@Test
 	@Transactional
 	public void 컬렉션패치조인(){
-		setting2();
+		setting();
+		//그니까 em.creatquery를 하면
+		//디비에쿼리를 날리는건 맞아요 근데
+		//그것에 대한 결과(엔티티)가 1차캐시에 있으니 db에서 조회했으나 버리고 1차캐시껄 가져와요
+		//하지만 1차캐시껀 members가 설정되지 않은 상태죠
+		//그래서 조회가 안돼요!
+		em.flush();
+		em.clear();
 		String query = "select t from Team t join fetch t.members where t.name =:name";
-		List<Team> teams = em.createQuery(query, Team.class).setParameter("name", "a").getResultList();
+		List<Team> teams = em.createQuery(query, Team.class).setParameter("name", "bb").getResultList();
 		for (Team team:teams) {
 			System.out.println(team.getName());
 			for (Member member:team.getMembers()) {
@@ -204,6 +212,90 @@ class ExApplicationTests {
 			System.out.println("============");
 		}
 	}
+
+	@Test
+	@Transactional
+	public void 컬렉션패치조인_중복제거(){
+		setting();
+		em.flush();
+		em.clear();
+		//Team의 중복을 제거하라!
+		String query = "select distinct t from Team t join fetch t.members where t.name =:name";
+		List<Team> teams = em.createQuery(query, Team.class).setParameter("name", "bb").getResultList();
+		for (Team team:teams) {
+			System.out.println(team.getName());
+			for (Member member:team.getMembers()) {
+				System.out.println(member.getName());
+			}
+			System.out.println("============");
+		}
+	}
+	@Test
+	@Transactional
+	public void 즉시로딩(){
+		biSetting();
+		em.flush();
+		em.clear();//디비에 쿼리날리는것을 보고싶어서
+		//팀이 n개면 n개의 팀에 대해 n개의 쿼리를 추가로 실행한다
+		String query = "select t from Team t join t.members m";
+		List<Team> teams = em.createQuery(query, Team.class).getResultList();
+		for (Team team:teams) {
+			System.out.println(team.getName());
+			for (Member member:team.getMembers()) {
+				System.out.println(member.getName());
+			}
+			System.out.println("============");
+		}
+	}
+	@Test
+	@Transactional
+	//실패하는 test
+	public void 둘이상컬렉션을페치(){
+		biSettingWithFood();
+		String query = "select t from Team t join fetch t.members join fetch t.foods";
+		//엔티티를 fetch하는건 괜찮은데 저런 컬렉션 둘 이상을 fetch하는게 안돼
+		List<Team> teams = em.createQuery(query, Team.class).getResultList();
+		for (Team team:teams) {
+			System.out.println(team.getName());
+			for (Member member:team.getMembers()) {
+				System.out.println(member.getName());
+			}
+			System.out.println("============");
+			for (Food food : team.getFoods()) {
+				System.out.println(food.getName());
+			}
+		}
+	}
+	@Test
+	@Transactional
+	public void 둘이상의페치조인(){
+		biSettingWithGroup();
+		//이땐 group1, team, member 모두 다 존재해야 출력이 되네..?[-
+		String query = "select m from Member m join fetch m.team join fetch m.group1";
+		List<Member> members = em.createQuery(query, Member.class).getResultList();
+		for (Member mem:members) {
+			System.out.println(mem.getName() + " " + mem.getTeam().getName() + " " + mem.getGroup1().getName());
+		}
+	}
+	@Test
+	@Transactional
+	public void 컬렉션페치조인은페이징처리가안돼(){
+		biSetting();
+		String str = "select t from Team t join fetch t.members m";
+		TypedQuery<Team> query =  em.createQuery(str, Team.class);
+		query.setFirstResult(10);
+		query.setMaxResults(20);
+		List<Team> teams = query.getResultList();
+		for (Team team:teams) {
+			System.out.println(team.getName());
+			for (Member member:team.getMembers()) {
+				System.out.println(member.getName());
+			}
+			System.out.println("============");
+		}
+
+	}
+
 
 
 
@@ -226,6 +318,7 @@ class ExApplicationTests {
 		em.persist(member1);
 		em.persist(member2);
 		em.persist(member3);
+
 	}
 
 	public void setting2(){
@@ -250,6 +343,108 @@ class ExApplicationTests {
 		em.persist(member1);
 		em.persist(member2);
 		em.persist(member3);
+	}
+	public void biSetting(){
+		Team team1 = new Team();
+		team1.setName("team1");
+		Team team2 = new Team();
+		team2.setName("team2");
+		Team team3 = new Team();
+		team3.setName("team3");
+		Team team4 = new Team();
+		team4.setName("team4");
+
+		Member member1 = new Member();
+		member1.setName("mem1");
+
+		Member member2 = new Member();
+		member2.setName("mem2");
+
+		Member member3 = new Member();
+		member3.setName("mem3");
+
+		Member member4 = new Member();
+		member4.setName("mem4");
+
+		team1.addMember(member1);
+		team1.addMember(member2);
+		team2.addMember(member3);
+		team4.addMember(member4);
+
+		em.persist(team1);
+		em.persist(team2);
+		em.persist(team3);
+		em.persist(team4);
+		em.persist(member1);
+		em.persist(member2);
+		em.persist(member3);
+		em.persist(member4);
+	}
+	public void biSettingWithFood(){
+		Team team1 = new Team();
+		team1.setName("team1");
+		Team team2 = new Team();
+		team2.setName("team2");
+		Team team3 = new Team();
+		team3.setName("team3");
+
+		Member member1 = new Member();
+		member1.setName("mem1");
+
+		Member member2 = new Member();
+		member2.setName("mem2");
+
+		Member member3 = new Member();
+		member3.setName("mem3");
+
+		Food food1 = new Food();
+		food1.setName("food1");
+
+		team1.addMember(member1);
+		team1.addMember(member2);
+		team2.addMember(member3);
+		team1.addFood(food1);
+
+		em.persist(team1);
+		em.persist(team2);
+		em.persist(team3);
+		em.persist(member1);
+		em.persist(member2);
+		em.persist(member3);
+	}
+	public void biSettingWithGroup(){
+		Team team1 = new Team();
+		team1.setName("team1");
+		Team team2 = new Team();
+		team2.setName("team2");
+		Team team3 = new Team();
+		team3.setName("team3");
+
+		Member member1 = new Member();
+		member1.setName("mem1");
+
+		Member member2 = new Member();
+		member2.setName("mem2");
+
+		Member member3 = new Member();
+		member3.setName("mem3");
+
+		Group1 group1 = new Group1();
+		group1.setName("group1");
+		member1.setGroup1(group1);
+		member2.setGroup1(group1);
+		team1.addMember(member1);
+		team1.addMember(member2);
+		team2.addMember(member3);
+
+		em.persist(team1);
+		em.persist(team2);
+		em.persist(team3);
+		em.persist(group1);
+		em.persist(member1);
+		em.persist(member2);
+		em.persist(member3);
+
 	}
 
 
