@@ -375,6 +375,47 @@ class ExApplicationTests {
 			System.out.println(team.getName());
 		}
 	}
+	@Test
+	@Transactional
+	public void 임베디드타입은비교지원안함(){
+		//given
+		Address address1 = new Address("주소1","주소2");
+		Address address2 = new Address("주소1","주소2");
+		Member member = new Member();
+		member.setName("홍길동");
+		member.setMyAddress(address1);
+		em.persist(member);
+		//when
+		List<Member> members = em.createQuery("select m from Member m where :address = m.myAddress", Member.class).setParameter("address", address2).getResultList();
+		//then
+		for (Member mem:members) {
+			System.out.println(mem.getName() + " " + mem.getMyAddress().getCode() + " " + mem.getMyAddress().getZipCode());
+		}
+
+	}
+	@Test
+	@Transactional
+	public void null연산(){
+		//given
+		Member member = new Member();
+		em.persist(member);
+		//when
+		//null은 = 연산이 안돼서 오류가뜬다 m.name = :name 이 null = null이니까
+		List<Member> members = em.createQuery("select m from Member m where (m.name = :name) is null").setParameter("name", null).getResultList();
+		for (Member mem:members) {
+			System.out.println(mem.getId());
+		}
+	}
+
+	@Test
+	@Transactional
+	public void Named쿼리(){
+		biSetting();
+		List<Member> list = em.createNamedQuery("Member.findByUsername", Member.class).setParameter("name", "mem1").getResultList();
+		for (Member mem:list) {
+			System.out.println(mem.getName());
+		}
+	}
 
 
 	public void setting(){
