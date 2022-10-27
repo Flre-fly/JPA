@@ -1,6 +1,9 @@
 package jpaStudy.ex;
 
 import jpaStudy.ex.entity.*;
+import jpaStudy.ex.entity.sangsok.Person;
+import jpaStudy.ex.entity.sangsok.Student;
+import jpaStudy.ex.entity.sangsok.Teacher;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -296,7 +299,82 @@ class ExApplicationTests {
 
 	}
 
+	@Test
+	@Transactional
+	public void 상속(){
+		//given
+		Student student = new Student(12, "학생1");
+		Teacher teacher = new Teacher("교감", "김교감");
+		em.persist(student);
+		em.persist(teacher);
+		em.flush();
+		em.clear();
+		//when
+		List<Person> personList = em.createQuery("select p from Person p where Type(p) = Student", Person.class).getResultList();
+		//then
+		for (Person p: personList) {
+			System.out.println(p.getName() + " " + ((Student) p).getAge());
+		}
+	}
 
+	@Test
+	@Transactional
+	public void null비교(){
+		//given
+		Student s = new Student();
+		s.setAge(1);
+		em.persist(s);
+		//when
+		List<Student> list = em.createQuery("select s from Student s where s.name is null", Student.class).getResultList();
+		//List<Student> list = em.createQuery("select s from Student s where s.name = null", Student.class).getResultList(); // error!
+	}
+
+	@Test
+	@Transactional
+	public void 컬렉션식ISEMPTY(){
+		//given
+		biSetting();
+		//when
+		List<Team> list = em.createQuery("select t from Team t where t.members is empty", Team.class).getResultList();
+		//then
+		for (Team team:list) {
+			System.out.println(team.getName());
+		}
+	}
+	@Test
+	@Transactional
+	public void 출력안되는컬렉션식of(){
+		//given
+		biSetting();
+		Member member1 = new Member();
+		member1.setName("mem1");
+		em.persist(member1);//member1도 영속화되어있어야 되는듯
+		//when
+		List<Team> list = em.createQuery("select t from Team t where :member1 member of t.members", Team.class).setParameter("member1", member1).getResultList();//주솟값이 다르니 출력이 안됨
+		//then
+		for (Team team:list) {
+			System.out.println(team.getName());
+		}
+	}
+
+	@Test
+	@Transactional
+	public void 출력되는컬렉션식of(){
+		//given
+		Member member1 = new Member();
+		member1.setName("mem1");
+		Team team1 = new Team();
+		team1.setName("team1");
+		team1.addMember(member1);
+		em.persist(member1);//member1도 영속화되어있어야 되는듯
+		em.persist(team1);
+		//when
+		List<Team> list = em.createQuery("select t from Team t where :member1 member of t.members", Team.class).setParameter("member1", member1).getResultList();
+		//then
+		for (Team team:list) {
+			System.out.println(team.getName());
+		}
+	}
 
 
 	public void setting(){
