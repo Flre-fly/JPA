@@ -15,6 +15,7 @@ import org.springframework.test.annotation.Commit;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
+import javax.persistence.criteria.*;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
@@ -417,6 +418,51 @@ class ExApplicationTests {
 		}
 	}
 
+	@Test
+	@Transactional
+	public void criteria() {
+		biSetting();
+		//select m from Member m
+		//cb필요
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+		//반환타입지정
+		CriteriaQuery<Member> cq = cb.createQuery(Member.class);
+		Root<Member> m = cq.from(Member.class);
+		cq.select(m);
+		//그대로
+		List<Member> members = em.createQuery(cq).getResultList();
+		for (Member mem:members) {
+			System.out.println(mem.getName());
+		}
+	}
+	@Test
+	@Transactional
+	public void criteria_조건정렬(){
+		//given
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+		CriteriaQuery<Member> cq = cb.createQuery(Member.class);//반환값은 엔티티, 임베디드타입, 기타에 쓸 수 있다
+
+		Root<Member> m = cq.from(Member.class);//조회의 시작점 엔티티에만 사용될 수 있다
+		Predicate usernameEqual = cb.equal(m.get("name"), "a");
+		Order ageDesc = cb.desc(m.get("age"));
+		cq.select(m)
+				.where(usernameEqual)
+				.orderBy(ageDesc);
+		List<Member> members = em.createQuery(cq).getResultList();
+	}
+
+	@Test
+	@Transactional
+	public void criteria_조건정렬2(){
+		//10살을 초과하는 회원 조회, 나이 역순으로 정렬
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+		CriteriaQuery<Member> cq = cb.createQuery(Member.class);
+		Root<Member> m = cq.from(Member.class);
+		Predicate greaterThan10 = cb.greaterThan(m.get("age"), 10);
+		Order ageDesc = cb.desc(m.get("age"));
+		cq.select(m).where(greaterThan10).orderBy(ageDesc);
+		List<Member> members = em.createQuery(cq).getResultList();
+	}
 
 	public void setting(){
 		Team team1 = new Team();
