@@ -1,10 +1,13 @@
 package jpaStudy.ex;
 
+import com.querydsl.core.Tuple;
+import com.querydsl.jpa.impl.JPAQuery;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import jpaStudy.ex.entity.*;
 import jpaStudy.ex.entity.sangsok.Person;
 import jpaStudy.ex.entity.sangsok.Student;
 import jpaStudy.ex.entity.sangsok.Teacher;
-import org.junit.jupiter.api.Assertions;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +21,7 @@ import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @SpringBootTest
@@ -27,6 +31,8 @@ class ExApplicationTests {
 	private EntityManager em;
 	@Autowired
 	private MyRepository repository;
+	@Autowired
+	private JPAQueryFactory factory;
 	@Test
 	@Transactional
 	@Commit
@@ -462,6 +468,121 @@ class ExApplicationTests {
 		Order ageDesc = cb.desc(m.get("age"));
 		cq.select(m).where(greaterThan10).orderBy(ageDesc);
 		List<Member> members = em.createQuery(cq).getResultList();
+	}
+
+	@Test
+	@Transactional
+	public void 쿼리DSL(){
+		biSetting();
+		QMember member = new QMember("m");
+		QMember member1 = QMember.member;
+		List<Member> members =
+				factory.selectFrom(member)
+						.where(member.id.lt(10l))
+						.orderBy(member.id.desc()).fetch();
+		for (Member mem:members) {
+			System.out.println(mem.getName());
+		}
+	}
+
+	@Test
+	@Transactional
+	public void 쿼리DSL페이징(){
+		biSetting();
+		QMember member = new QMember("m");
+		List<Member> members =
+				factory.selectFrom(member)
+						.where(member.id.lt(10l))
+						.orderBy(member.id.desc())
+						.offset(1l)//페이지 번호
+						.limit(3)//페이지 사이즈
+						.fetch();
+		for (Member mem:members) {
+			System.out.println(mem.getName());
+		}
+
+		factory.selectFrom(member)
+				.orderBy(member.id.desc(), member.name.asc().nullsLast()).fetch();
+	}
+	@Test
+	@Transactional
+	public void 쿼리dsl집합함수(){
+		biSetting();
+		QMember member = QMember.member;
+		List<Tuple> tuples = factory.select(member.id.count(), member.id.avg())
+				.from(member)
+				.fetch();
+		for (Tuple t:tuples) {
+			System.out.println(t.get(member.id.count()));
+			System.out.println(t.get(member.id.avg()));
+		}
+	}
+	@Test
+	@Transactional
+	public void 쿼리dsl기본조인(){
+		biSetting();
+		QMember member = QMember.member;
+		QTeam team = QTeam.team;
+		List<Member> members = factory.selectFrom(member).join(member.team, team)
+				.where(team.name.eq("team1"))
+				.fetch();
+		//TEAM1이랑 조인된 MEMBER의 이름을 말하는거니까...
+		Assertions.assertThat(members).extracting("name").containsAnyOf("mem1","mem2");
+
+	}
+	@Test
+	@Transactional
+	public void 쿼리dsl세타조인(){
+		setting2();
+		QMember Qmem = QMember.member;
+		QTeam Qteam = QTeam.team;
+		List<Member> list = factory.select(Qmem).from(Qmem, Qteam).where(Qmem.name.eq(Qteam.name)).fetch();
+		for (Member mem:list) {
+			System.out.println(mem.getName() + " " + mem.getTeam().getName());
+		}
+	}
+	@Test
+	@Transactional
+	public void outerjoin_innerjoin(){
+		QMember member = QMember.member;
+		QTeam team = QTeam.team;
+		List<Team> list = factory.selectFrom(team).leftJoin(member)
+				.on(team.id.eq(member.team.id)).fetch();
+		//on: join전에 필터링하고 조인을 하면 에러안남
+		//where: join을 했음. 그다음에 필터링하면 에러남 -> null 때문에 그런가?
+		list.stream().forEach(e -> {
+				System.out.println(e.getName() + "========");
+				e.getMembers().stream().forEach(System.out::println);
+		});
+		/*
+		for (Team t:list) {
+			System.out.println(t.getName() + "========");
+			for (Member m:t.getMembers()) {
+				System.out.println(m.getName());
+			}
+		}*/
+	}
+	@Test
+	@Transactional
+	@DisplayName("예) 회원과 팀을 조인하면서, 팀 이름이 TeamA인 팀만 조인 하고 회원은 모두 조회한다.")
+	void joinOnFiltering(){
+		//given
+		biSetting();
+		QMember member = QMember.member;
+		QTeam team = QTeam.team;
+		//when
+		List<Tuple> result = factory
+				.select(member, team)
+				.from(member)
+				.leftJoin(member.team, team)
+				.on(team.name.eq("team1"))
+				.fetch();
+		//then
+		for (Tuple tuple : result) {
+			System.out.print(tuple.get(member).getName());
+			if(tuple.get(team)!=null) System.out.println("   "+tuple.get(team).getName());
+			else System.out.println("  null");
+		}
 	}
 
 	public void setting(){
