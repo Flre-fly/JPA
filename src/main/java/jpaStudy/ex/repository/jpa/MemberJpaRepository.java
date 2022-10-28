@@ -1,6 +1,7 @@
 package jpaStudy.ex.repository.jpa;
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Predicate;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jpaStudy.ex.dto.MemberSearchCondition;
 import jpaStudy.ex.dto.MemberTeamDto;
@@ -62,9 +63,44 @@ public class MemberJpaRepository {
                 QMember.member.age,//생성자 순서에 잘 맞춰야함
                 QTeam.team.id.as("teamId"),
                 QTeam.team.name.as("teamName")
-        )).from(QMember.member).leftJoin(QMember.member.team, QTeam.team).on(builder).fetch();
+        )).from(QMember.member).leftJoin(QMember.member.team, QTeam.team).where(builder).fetch();
     }
     //on과 where의 차이, join과 outer join의 차이
     //leftjoin으로 해야 다 출력이되니까. null이여도 안걸리고 출력이 되니까 그렇게 한거야!
+
+    public List<MemberTeamDto> searchByWhere(MemberSearchCondition condition){
+        return queryFactory.select(new QMemberTeamDto(
+                QMember.member.id.as("memberId"),
+                QMember.member.name.as("username"),
+                QMember.member.age,
+                QTeam.team.id.as("teamId"),
+                QTeam.team.name.as("teamName")
+        )).from(QMember.member).leftJoin(QMember.member.team, QTeam.team).where(memberNameEq(condition.getUsername()), teamNameEq(condition.getTeamName()),ageGoe(condition.getAgeGoe()), ageLoe(condition.getAgeLoe())).fetch();
+    }
+    public List<Member> test(MemberSearchCondition condition){
+        return queryFactory.select(QMember.member)
+                .from(QMember.member, QTeam.team)
+                .where(memberNameEq(condition.getUsername()))
+                .fetch();
+    }
+    public List<Member> test1(MemberSearchCondition condition){
+        return queryFactory.select(QMember.member).from(QMember.member, QTeam.team).where(memberNameEq(condition.getUsername()), teamNameEq(condition.getTeamName()),ageGoe(condition.getAgeGoe()), ageLoe(condition.getAgeLoe())).fetch();
+    }
+    private Predicate memberNameEq(String name){
+        if (!hasText(name)) return null;
+        return QMember.member.name.eq(name);
+    }
+    private Predicate teamNameEq(String name){
+        if (!hasText(name)) return null;
+        return QTeam.team.name.eq(name);
+    }
+    private Predicate ageLoe(Integer age){
+        if(age== null) return null;
+        return QMember.member.age.loe(age);
+    }
+    private Predicate ageGoe(Integer age){
+        if(age== null) return null;
+        return QMember.member.age.goe(age);
+    }
 
 }
