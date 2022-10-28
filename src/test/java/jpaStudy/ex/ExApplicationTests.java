@@ -1,8 +1,15 @@
 package jpaStudy.ex;
 
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
-import com.querydsl.jpa.impl.JPAQuery;
+import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jpaStudy.ex.dto.QMemberDto;
 import jpaStudy.ex.entity.*;
 import jpaStudy.ex.entity.sangsok.Person;
 import jpaStudy.ex.entity.sangsok.Student;
@@ -12,16 +19,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.test.annotation.Commit;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.TypedQuery;
+import javax.persistence.*;
 import javax.persistence.criteria.*;
 import javax.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @SpringBootTest
@@ -33,6 +35,8 @@ class ExApplicationTests {
 	private MyRepository repository;
 	@Autowired
 	private JPAQueryFactory factory;
+	@PersistenceUnit
+	EntityManagerFactory emf;
 	@Test
 	@Transactional
 	@Commit
@@ -575,7 +579,7 @@ class ExApplicationTests {
 				.select(member, team)
 				.from(member)
 				.leftJoin(member.team, team)
-				.on(team.name.eq("team1"))
+				.where(team.name.eq("team1"))
 				.fetch();
 		//then
 		for (Tuple tuple : result) {
@@ -584,6 +588,260 @@ class ExApplicationTests {
 			else System.out.println("  null");
 		}
 	}
+	@Test
+	@Transactional
+	@DisplayName("패치조인을 사용하지 않고 데이터를 가지고 오는 방법이다.")
+	void fetchJoinNo(){
+		//given
+		biSetting();
+		em.flush();
+		em.clear();
+		//when
+		Member member = factory.selectFrom(QMember.member).where(QMember.member.name.eq("mem1")).fetchOne();
+		boolean isLoaded = emf.getPersistenceUnitUtil().isLoaded(member.getTeam());
+		//then
+		Assertions.assertThat(isLoaded).isEqualTo(false);
+	}
+
+	@Test
+	@Transactional
+	@DisplayName("패치조인을 사용해서 데이터를 가지고 오는 방법이다.")
+	void fetchJoinYes(){
+		//given
+		biSetting();
+		em.flush();
+		em.clear();
+		//when
+		Member member = factory.selectFrom(QMember.member).join(QMember.member.team, QTeam.team).fetchJoin().where(QMember.member.name.eq("mem1")).fetchOne();
+		boolean isLoaded = emf.getPersistenceUnitUtil().isLoaded(member.getTeam());
+		//then
+		Assertions.assertThat(isLoaded).isEqualTo(true);
+	}
+	@Test
+	@Transactional
+	@DisplayName("나이가 가장 많은 회원을 조회한다고 해보자.")
+	void subQuery(){
+		//given
+		biSetting();
+		QMember m2 = new QMember("M");
+		//when
+		Member member = factory.selectFrom(QMember.member).where(QMember.member.age.eq(JPAExpressions.select(m2.age.max()).from(m2).fetchOne())).fetchOne();
+		//then
+		Assertions.assertThat(member.getAge()).isEqualTo(113);
+	}
+	@Test
+	@Transactional
+	@DisplayName("나이가 평균 이상인 회원을 조회해오자")
+	void subQueryWithBiggerthanAvg(){
+		//given
+		biSetting();
+		QMember m2 = new QMember("M");
+		//when
+		List<Member> members = factory.selectFrom(QMember.member).where(QMember.member.age.goe(JPAExpressions.select(m2.age.avg()).from(m2))).fetch();
+		//then
+		members.forEach(e->
+		System.out.println(e.getName()));
+	}
+
+	@Test
+	@Transactional
+	@DisplayName("나이가 10인 회원을 조회한다고 해보자. - In 을 이용")
+	void subQueryIn(){
+		//given
+		biSetting();
+		QMember m2 = new QMember("M");
+		//when
+		Member member = factory.selectFrom(QMember.member).where(QMember.member.in(JPAExpressions.selectFrom(m2).where(m2.age.eq(1)))).fetchOne();
+		//then
+		Assertions.assertThat(member.getAge()).isEqualTo(1);
+	}
+
+
+	@Transactional
+	@Test
+	void baseCase(){
+		//given
+		biSetting();
+		//when
+		List<String> agelist = factory.select(QMember.member.age.when(1).then("한살이다!!!").otherwise("난모르겠다!!")).from(QMember.member).fetch();
+		//then
+		agelist.forEach(System.out::println);
+	}
+	@Test
+	@Transactional
+	@DisplayName("조금 복잡한 Case 문! - CaseBuilder() 이용!")
+	void complexCase(){
+		//given
+		biSetting();
+		//when
+		List<String> ageList = factory.select(new CaseBuilder().when(QMember.member.age.between(0, 20)).then("0~20사이의 나이군!").otherwise("그외의나이군!")).from(QMember.member).fetch();
+		//then
+		ageList.forEach(System.out::println);
+	}
+	@Test
+	@Transactional
+	//0 ~ 30살이 아닌 회원을 가장 먼저 출력
+	//0 ~ 20살 회원 출력
+	//21 ~ 30살 회원 출력
+	void complexCase2(){
+		//given
+		biSetting();
+		//when
+		NumberExpression<Integer> rankCase = new CaseBuilder().when(QMember.member.age.between(1,2)).then(2)
+				.when(QMember.member.age.between(3,20)).then(1).otherwise(3);
+		List<Tuple> tuple = factory.select(QMember.member.name, QMember.member.age, rankCase).from(QMember.member).orderBy(rankCase.desc()).fetch();
+		//then
+		tuple.forEach(System.out::println);
+	}
+
+	@Test
+	@Transactional
+	void addConstant(){
+		//given
+		biSetting();
+		//when
+		List<Tuple> list = factory.select(QMember.member.name, Expressions.constant("상수1")).from(QMember.member).fetch();
+		//then
+		list.forEach(System.out::println);
+	}
+	@Test
+	@Transactional
+	void addConcat(){
+		//given
+		biSetting();
+		//when
+		List<Tuple> list = factory.select(QMember.member.name, QMember.member.name.concat("_").concat(QMember.member.age.stringValue())).from(QMember.member).fetch();
+		//then
+		list.forEach(System.out::println);
+	}
+
+	@Test
+	//기존 jpa를 이용해서 projection을 해보자!
+	void projectionWithJpa(){
+		//given
+		//when
+		List<jpaStudy.ex.dto.MemberDto> result = em.createQuery("select new jpaStudy.ex.dto.MemberDto(m.name, m.age) from Member m", jpaStudy.ex.dto.MemberDto.class).getResultList();
+		//then
+		result.forEach(e -> {
+			System.out.println(e.getName() + " " + e.getAge());
+		});
+		//언제 다 생성자에 맞춰 다 넣어줘!!!!!!!!!!!!!!!!!!!!!!!!!
+
+	}
+	@Test
+	@DisplayName("프로퍼티 setter 를 이용해 생성하는 방식")
+	void projectionWithQueryDSL(){
+		//given
+		//when
+		//이렇게 인자로 넘기는 parameter의 순서를 바꾸면 문제가 생김
+		//List<jpaStudy.ex.dto.MemberDto> list = factory.select(Projections.constructor(jpaStudy.ex.dto.MemberDto.class, QMember.member.age, QMember.member.name.as("name") )).from(QMember.member).fetch();
+		List<jpaStudy.ex.dto.MemberDto> list = factory.select(Projections.constructor(jpaStudy.ex.dto.MemberDto.class, QMember.member.name.as("name") , QMember.member.age)).from(QMember.member).fetch();
+		//then
+		list.forEach(e -> {
+			System.out.println(e.getName() + " " + e.getAge());
+		});
+	}
+	@Test
+	void 서브쿼리_projection(){
+		//given
+		QMember member1 = new QMember("M");
+		//when
+		List<jpaStudy.ex.dto.MemberDto> result = factory.select(Projections.fields(jpaStudy.ex.dto.MemberDto.class, QMember.member.name,
+				ExpressionUtils.as(
+						JPAExpressions.select(member1.age.max()).from(member1), "age"
+				)
+				)).from(QMember.member).fetch();
+		//then
+		result.forEach(e -> {
+			System.out.println(e.getName() + " " + e.getAge());
+			Assertions.assertThat(e.getAge()).isEqualTo(113);
+		});
+	}
+	@Test
+	void QueryProjection(){
+		//given
+		//when
+		List<jpaStudy.ex.dto.MemberDto> result = factory.select(new QMemberDto( QMember.member.name, QMember.member.age )).from(QMember.member).fetch();
+		//then
+		result.forEach(e -> {
+			System.out.println(e.getName() + " " + e.getAge());
+		});
+	}
+
+	@Test
+	@DisplayName("조건에 따라서 조건문이 실행되기도 하고 안실행되기도 하는 쿼리")
+	void dynamicQueryUsingBooleanBuilder(){
+		//given
+		String username = null;
+		Integer age = 1;
+		//when
+		List<Member> list = searchMember1(username, age);
+		//then
+		list.forEach(e -> {
+			System.out.println(e.getName() + " " + e.getAge());
+		});
+
+	}
+	List<Member> searchMember1(String name, Integer age){
+		BooleanBuilder b = new BooleanBuilder();
+		if(name != null){
+			b.and(QMember.member.name.eq(name));
+		}
+		if(age != null){
+			b.and(QMember.member.age.goe(age));
+		}
+		return factory.selectFrom(QMember.member).where(b).fetch();
+
+	}
+	@Test
+	@DisplayName("Where 다중 파라미터 사용")
+	void dynamicQueryUsingWhere(){
+		//given
+		String username = "mem1";
+		Integer age = null;
+		//when
+		List<Member> list = searchMember2(username, age);
+		//then
+		list.forEach(e -> {
+			System.out.println(e.getName() + " " + e.getAge());
+		});
+	}
+	List<Member> searchMember2(String userName, Integer age){
+		return factory.selectFrom(QMember.member).where(userNameEp(userName), ageEp(age)).fetch();
+	}
+	private com.querydsl.core.types.Predicate userNameEp(String username){
+		if(username==null) return null;
+		return QMember.member.name.eq(username);
+	}
+	private com.querydsl.core.types.Predicate ageEp(Integer age){
+		if(age==null) return null; //조건검사안함
+		return QMember.member.age.lt(112321l);
+	}
+	@Test
+	@Transactional
+	void bulk(){
+		//given
+		//when
+		long count = factory.update(QMember.member).set(QMember.member.name, "비회원").execute();
+		//then
+		Assertions.assertThat(count).isEqualTo(7);
+	}
+
+	@Test
+	@Transactional
+	void bulk주의사항(){
+		//given
+		//when
+		List<Member> list1 = factory.selectFrom(QMember.member).fetch();
+		long count = factory.update(QMember.member).set(QMember.member.name, "비회원").execute();
+		List<Member> list = factory.selectFrom(QMember.member).fetch();
+		//then
+		Assertions.assertThat(count).isEqualTo(4);
+		list.forEach(e -> {
+			System.out.println(e.getName() + " " + e.getAge());
+		});
+	}
+
 
 	public void setting(){
 		Team team1 = new Team();
@@ -630,6 +888,9 @@ class ExApplicationTests {
 		em.persist(member2);
 		em.persist(member3);
 	}
+	@Commit
+	@Transactional
+	@Test
 	public void biSetting(){
 		Team team1 = new Team();
 		team1.setName("team1");
@@ -642,12 +903,15 @@ class ExApplicationTests {
 
 		Member member1 = new Member();
 		member1.setName("mem1");
+		member1.setAge(1);
 
 		Member member2 = new Member();
 		member2.setName("mem2");
+		member2.setAge(12);
 
 		Member member3 = new Member();
 		member3.setName("mem3");
+		member3.setAge(113);
 
 		Member member4 = new Member();
 		member4.setName("mem4");

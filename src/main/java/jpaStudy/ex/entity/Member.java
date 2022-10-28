@@ -25,11 +25,13 @@ public class Member {
     @Column
     private String name;
 
+    private Integer age;
+
     @ElementCollection
     @CollectionTable(name = "Address", joinColumns = @JoinColumn(name = "MEMBER_ID"))
     private List<Address> addressList;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "team_id")
     private Team team;
 
