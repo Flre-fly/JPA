@@ -41,15 +41,17 @@ public class Repositorytest {
     void 동적쿼리where(){
         //given
         //when
-        List<MemberTeamDto> list = repository.searchByWhere(new MemberSearchCondition("mem1", null , null,null));
+        List<MemberTeamDto> list = repository.searchByWhere(new MemberSearchCondition(null, null , null,null));
         //then
         list.forEach(e -> {
             System.out.println(e.getUsername() + " " + e.getTeamName() + " " + e.getTeamId() + " " + e.getMemberId() + " " + e.getAge());
         });
     }
     @Test
-    @Transactional//TODO: 왜이거안붙이면 프록시초기화안됐다더?  그이유는 트랜잭션안에있어야 영속성컨텍스트의 관리를바당서그런건가"?
-    void 왜네번이나출력되지(){
+    @Transactional
+        // 왜이거안붙이면 프록시초기화안됐다더?  그이유는 트랜잭션안에있어야 영속성컨텍스트의 관리를바당서그런건가"?
+    //repository에 붙은 트랜잭션ㅇ이 끝나면서 프록시 객체인 team의 name을 읽으려해서 그런거임
+    void 왜네번이나출력되지(){//헤결
         //given
         //when
         List<Member> list = repository.test(new MemberSearchCondition("mem1", null , null,null));
@@ -57,11 +59,6 @@ public class Repositorytest {
         list.forEach(e -> {
             System.out.println(e.getName() + " " + e.getTeam().getName() + " " + e.getId() + " " );
         });
-    }
-
-    @Test
-    void test(){
-        queryFactory.selectFrom(QMember.member).leftJoin(QMember.member.team, QTeam.team).fetch();
     }
 
     public void biSetting(){

@@ -2,6 +2,7 @@ package jpaStudy.ex.repository.jpa;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Predicate;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jpaStudy.ex.dto.MemberSearchCondition;
 import jpaStudy.ex.dto.MemberTeamDto;
@@ -75,30 +76,33 @@ public class MemberJpaRepository {
                 QMember.member.age,
                 QTeam.team.id.as("teamId"),
                 QTeam.team.name.as("teamName")
-        )).from(QMember.member).leftJoin(QMember.member.team, QTeam.team).where(memberNameEq(condition.getUsername()), teamNameEq(condition.getTeamName()),ageGoe(condition.getAgeGoe()), ageLoe(condition.getAgeLoe())).fetch();
+        )).from(QMember.member)
+                .join(QMember.member.team, QTeam.team)
+                .fetchJoin()
+                .on()
+                .fetch();
     }
     public List<Member> test(MemberSearchCondition condition){
-        return queryFactory.select(QMember.member)
-                .from(QMember.member, QTeam.team)
+        return queryFactory.selectFrom(QMember.member).join(QMember.member.team, QTeam.team).fetchJoin()
                 .where(memberNameEq(condition.getUsername()))
                 .fetch();
     }
     public List<Member> test1(MemberSearchCondition condition){
         return queryFactory.select(QMember.member).from(QMember.member, QTeam.team).where(memberNameEq(condition.getUsername()), teamNameEq(condition.getTeamName()),ageGoe(condition.getAgeGoe()), ageLoe(condition.getAgeLoe())).fetch();
     }
-    private Predicate memberNameEq(String name){
+    private BooleanExpression memberNameEq(String name){
         if (!hasText(name)) return null;
         return QMember.member.name.eq(name);
     }
-    private Predicate teamNameEq(String name){
+    private  BooleanExpression teamNameEq(String name){
         if (!hasText(name)) return null;
         return QTeam.team.name.eq(name);
     }
-    private Predicate ageLoe(Integer age){
+    private  BooleanExpression ageLoe(Integer age){
         if(age== null) return null;
         return QMember.member.age.loe(age);
     }
-    private Predicate ageGoe(Integer age){
+    private  BooleanExpression ageGoe(Integer age){
         if(age== null) return null;
         return QMember.member.age.goe(age);
     }
