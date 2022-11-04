@@ -18,7 +18,7 @@ import org.springframework.util.Assert;
 import java.util.List;
 
 //복습
-@ActiveProfiles("test")
+@ActiveProfiles("local")
 @SpringBootTest
 public class sqlExTest {
 
@@ -43,6 +43,10 @@ public class sqlExTest {
     public void 프로파일(){
         Assertions.assertEquals(station.getName(), "testStation");
         //https://bepoz-study-diary.tistory.com/371
+
+    }
+    @Test
+    public void local시에만변수세팅(){
 
     }
 

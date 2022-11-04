@@ -42,6 +42,11 @@ public class Member {
     @Embedded
     private Address myAddress;
 
+    public Member(String name, Team team){
+        this.name = name;
+        team.addMember(this);
+        this.team = team;
+    }
 
 
 

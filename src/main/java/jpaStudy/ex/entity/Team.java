@@ -37,6 +37,10 @@ public class Team {
         food.setTeam(this);
     }
 
+    public Team(String name){
+        this.name = name;
+    }
+
 
 
 }
