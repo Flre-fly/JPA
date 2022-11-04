@@ -4,19 +4,12 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import jpaStudy.ex.dto.MemberSearchCondition;
 import jpaStudy.ex.dto.MemberTeamDto;
 import jpaStudy.ex.entity.Member;
-import jpaStudy.ex.entity.QMember;
-import jpaStudy.ex.entity.QTeam;
 import jpaStudy.ex.entity.Team;
 import jpaStudy.ex.repository.jpa.MemberJpaRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.Commit;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.PersistenceContext;
-import javax.persistence.PersistenceUnit;
 import javax.transaction.Transactional;
 import java.util.List;
 
@@ -60,6 +53,7 @@ public class Repositorytest {
             System.out.println(e.getName() + " " + e.getTeam().getName() + " " + e.getId() + " " );
         });
     }
+
 
     public void biSetting(){
         Team team1 = new Team();

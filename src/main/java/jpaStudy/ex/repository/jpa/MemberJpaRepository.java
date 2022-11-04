@@ -1,7 +1,6 @@
 package jpaStudy.ex.repository.jpa;
 
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jpaStudy.ex.dto.MemberSearchCondition;
@@ -10,7 +9,6 @@ import jpaStudy.ex.dto.QMemberTeamDto;
 import jpaStudy.ex.entity.Member;
 import jpaStudy.ex.entity.QMember;
 import jpaStudy.ex.entity.QTeam;
-import org.springframework.boot.autoconfigure.info.ProjectInfoProperties;
 
 import javax.persistence.EntityManager;
 import java.util.List;

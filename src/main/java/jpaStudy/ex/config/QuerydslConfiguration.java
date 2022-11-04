@@ -1,4 +1,4 @@
-package jpaStudy.ex.entity.config;
+package jpaStudy.ex.config;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.context.annotation.Bean;
