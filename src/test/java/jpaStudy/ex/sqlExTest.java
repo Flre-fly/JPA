@@ -27,6 +27,8 @@ public class sqlExTest {
     @Autowired
     Station station;
 
+
+
     @Test
     public void 중복x(){
 
@@ -45,9 +47,6 @@ public class sqlExTest {
         //https://bepoz-study-diary.tistory.com/371
 
     }
-    @Test
-    public void local시에만변수세팅(){
 
-    }
 
 }

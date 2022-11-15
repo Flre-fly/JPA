@@ -4,19 +4,25 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import jpaStudy.ex.dto.MemberSearchCondition;
 import jpaStudy.ex.dto.MemberTeamDto;
 import jpaStudy.ex.entity.Member;
+import jpaStudy.ex.entity.QMember;
 import jpaStudy.ex.entity.Team;
 import jpaStudy.ex.repository.jpa.MemberJpaRepository;
+import jpaStudy.ex.repository.spring.MemberRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import javax.transaction.Transactional;
 import java.util.List;
 
 @SpringBootTest
+@ActiveProfiles("local")
 public class Repositorytest {
     @Autowired
     private MemberJpaRepository repository;
+    @Autowired
+    MemberRepository memberRepository;
 
     @Autowired
     JPAQueryFactory queryFactory;
@@ -42,6 +48,20 @@ public class Repositorytest {
         list.forEach(e -> {
             System.out.println(e.getUsername() + " " + e.getTeamName() + " " + e.getTeamId() + " " + e.getMemberId() + " " + e.getAge());
         });
+    }
+
+    @Test
+    void querydslPredicateExecutorTest() {
+        //given
+        //whem
+        Iterable<Member> result = memberRepository.findAll(
+                QMember.member.age.between(0, 40)
+                        .and(QMember.member.name.eq("member1"))
+        );
+        //then
+        System.out.println("--------------");
+        result.forEach(System.out::println);
+
     }
 
 

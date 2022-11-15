@@ -32,13 +32,16 @@ public class InitMember {
         public void init() {
             Team teamA = new Team("TeamA");
             Team teamB = new Team("TeamB");
-            em.persist(teamA);
-            em.persist(teamB);
+            if(em.find(Team.class, 1l)==null){
+                em.persist(teamA);
+                em.persist(teamB);
 
-            for (int i = 0; i < 100; i++) {
-                Team selectedTeam = i % 2 == 0 ? teamA : teamB;
-                em.persist(new Member("member" + i, selectedTeam));
+                for (int i = 0; i < 100; i++) {
+                    Team selectedTeam = i % 2 == 0 ? teamA : teamB;
+                    em.persist(new Member("member" + i, selectedTeam, i));
+                }
             }
+
         }
     }
 }
