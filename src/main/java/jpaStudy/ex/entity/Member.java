@@ -31,7 +31,7 @@ public class Member {
     @CollectionTable(name = "Address", joinColumns = @JoinColumn(name = "MEMBER_ID"))
     private List<Address> addressList;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "team_id")
     private Team team;
 
