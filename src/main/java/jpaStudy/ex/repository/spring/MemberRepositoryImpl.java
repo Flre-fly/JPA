@@ -46,7 +46,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom{
 
     @Override
     public Page<MemberTeamDto> searchPageSimple(MemberSearchCondition condition, Pageable pageable) {
-        QueryResults<MemberTeamDto> results = queryFactory.select(new QMemberTeamDto(
+        List<MemberTeamDto> content = queryFactory.select(new QMemberTeamDto(
                         QMember.member.id.as("memberId"),
                         QMember.member.name.as("username"),
                         QMember.member.age,
@@ -60,10 +60,8 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom{
                         ageLoe(condition.getAgeLoe()),
                         ageGoe(condition.getAgeGoe())
                 )
-                .fetchResults();
-        List<MemberTeamDto> contents = results.getResults();
-        long count = results.getTotal();
-        return new PageImpl<>(contents, pageable, count);
+                .fetch();
+        return new PageImpl<>(content, pageable, content.size());
     }
 
     @Override
