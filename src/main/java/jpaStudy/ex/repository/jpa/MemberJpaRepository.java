@@ -9,6 +9,7 @@ import jpaStudy.ex.dto.QMemberTeamDto;
 import jpaStudy.ex.entity.Member;
 import jpaStudy.ex.entity.QMember;
 import jpaStudy.ex.entity.QTeam;
+import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 
 import javax.persistence.EntityManager;
 import java.util.List;
@@ -21,6 +22,9 @@ public class MemberJpaRepository {
     private final EntityManager em;
     private final JPAQueryFactory queryFactory;
 
+    //여기서 주입을 해주는지 안해주는지 어떻게 알지?
+    //생성자가 하나이면 생략가능함.
+    //생성자의 인자로 넣은것을 빈에서 찾아서 알아서 주입해준다
     public MemberJpaRepository(EntityManager em) {
         this.em = em;
         this.queryFactory = new JPAQueryFactory(em);
@@ -76,17 +80,19 @@ public class MemberJpaRepository {
                 QTeam.team.name.as("teamName")
         )).from(QMember.member)
                 .join(QMember.member.team, QTeam.team)
-                .fetchJoin()
-                .on()
+                .where(
+                        memberNameEq(condition.getUsername()),
+                        teamNameEq(condition.getTeamName()),
+                        ageLoe(condition.getAgeLoe()),
+                        ageGoe(condition.getAgeGoe())
+                )
+                //이렇게 하면 동적쿼리름 만들 수 없게됨
+                /*.where(QMember.member.name.eq(condition.getTeamName()),
+                        QMember.member.age.loe(condition.getAgeLoe()),
+                        QMember.member.age.goe(condition.getAgeGoe()),
+                        QMember.member.team.name.eq(condition.getTeamName())
+                )*/
                 .fetch();
-    }
-    public List<Member> test(MemberSearchCondition condition){
-        return queryFactory.selectFrom(QMember.member).join(QMember.member.team, QTeam.team).fetchJoin()
-                .where(memberNameEq(condition.getUsername()))
-                .fetch();
-    }
-    public List<Member> test1(MemberSearchCondition condition){
-        return queryFactory.select(QMember.member).from(QMember.member, QTeam.team).where(memberNameEq(condition.getUsername()), teamNameEq(condition.getTeamName()),ageGoe(condition.getAgeGoe()), ageLoe(condition.getAgeLoe())).fetch();
     }
     private BooleanExpression memberNameEq(String name){
         if (!hasText(name)) return null;
