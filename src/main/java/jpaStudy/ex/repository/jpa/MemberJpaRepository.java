@@ -15,6 +15,7 @@ import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.Optional;
 
+import static jpaStudy.ex.entity.QMember.member;
 import static org.springframework.util.StringUtils.hasText;
 
 @org.springframework.stereotype.Repository
@@ -44,42 +45,42 @@ public class MemberJpaRepository {
         return Optional.ofNullable(member);
     }
     public List<Member> findAll(){
-        return queryFactory.selectFrom(QMember.member).fetch();
+        return queryFactory.selectFrom(member).fetch();
     }
     public List<MemberTeamDto> searchByBuilder(MemberSearchCondition condition){
         BooleanBuilder builder = new BooleanBuilder();
         if(hasText(condition.getUsername())){
-            builder.and(QMember.member.name.eq(condition.getUsername()));
+            builder.and(member.name.eq(condition.getUsername()));
         }
         if(hasText(condition.getTeamName())){
-            builder.and(QMember.member.team.name.eq(condition.getTeamName()));
+            builder.and(member.team.name.eq(condition.getTeamName()));
         }
         if(condition.getAgeLoe() != null){
-            builder.and(QMember.member.age.goe(condition.getAgeLoe()));
+            builder.and(member.age.goe(condition.getAgeLoe()));
         }
         if(condition.getAgeGoe() != null){
-            builder.and(QMember.member.age.loe(condition.getAgeGoe()));
+            builder.and(member.age.loe(condition.getAgeGoe()));
         }
         return queryFactory.select(new QMemberTeamDto(
-                QMember.member.id.as("memberId"),
-                QMember.member.name.as("username"),
-                QMember.member.age,//생성자 순서에 잘 맞춰야함
+                member.id.as("memberId"),
+                member.name.as("username"),
+                member.age,//생성자 순서에 잘 맞춰야함
                 QTeam.team.id.as("teamId"),
                 QTeam.team.name.as("teamName")
-        )).from(QMember.member).leftJoin(QMember.member.team, QTeam.team).where(builder).fetch();
+        )).from(member).leftJoin(member.team, QTeam.team).where(builder).fetch();
     }
     //on과 where의 차이, join과 outer join의 차이
     //leftjoin으로 해야 다 출력이되니까. null이여도 안걸리고 출력이 되니까 그렇게 한거야!
 
     public List<MemberTeamDto> searchByWhere(MemberSearchCondition condition){
         return queryFactory.select(new QMemberTeamDto(
-                QMember.member.id.as("memberId"),
-                QMember.member.name.as("username"),
-                QMember.member.age,
+                member.id.as("memberId"),
+                member.name.as("username"),
+                member.age,
                 QTeam.team.id.as("teamId"),
                 QTeam.team.name.as("teamName")
-        )).from(QMember.member)
-                .join(QMember.member.team, QTeam.team)
+        )).from(member)
+                .join(member.team, QTeam.team)
                 .where(
                         memberNameEq(condition.getUsername()),
                         teamNameEq(condition.getTeamName()),
@@ -96,7 +97,7 @@ public class MemberJpaRepository {
     }
     private BooleanExpression memberNameEq(String name){
         if (!hasText(name)) return null;
-        return QMember.member.name.eq(name);
+        return member.name.eq(name);
     }
     private  BooleanExpression teamNameEq(String name){
         if (!hasText(name)) return null;
@@ -104,11 +105,20 @@ public class MemberJpaRepository {
     }
     private  BooleanExpression ageLoe(Integer age){
         if(age== null) return null;
-        return QMember.member.age.loe(age);
+        return member.age.loe(age);
     }
     private  BooleanExpression ageGoe(Integer age){
         if(age== null) return null;
-        return QMember.member.age.goe(age);
+        return member.age.goe(age);
+    }
+    private  Boolean exist(Long memberId){
+        Integer fetchOne = queryFactory
+                .selectOne()
+                .from(member)
+                .where(member.id.eq(memberId))
+                .fetchFirst();
+
+        return fetchOne != null;
     }
 
 }
