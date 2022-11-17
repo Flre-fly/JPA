@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -19,6 +21,14 @@ public class Group1 {
     private Long id;
 
     private String name;
+
+    @OneToMany(mappedBy = "group1")
+    private List<Member> members = new ArrayList<>();
+
+
+    public Group1(String name){
+        this.name = name;
+    }
 
 
 }

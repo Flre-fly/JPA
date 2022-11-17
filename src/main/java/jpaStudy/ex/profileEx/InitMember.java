@@ -1,5 +1,6 @@
 package jpaStudy.ex.profileEx;
 
+import jpaStudy.ex.entity.Group1;
 import jpaStudy.ex.entity.Member;
 import jpaStudy.ex.entity.Team;
 import lombok.RequiredArgsConstructor;
@@ -30,15 +31,17 @@ public class InitMember {
 
         @Transactional
         public void init() {
+            Group1 group1 = new Group1("group1");
             Team teamA = new Team("TeamA");
             Team teamB = new Team("TeamB");
             if(em.find(Team.class, 1l)==null){
                 em.persist(teamA);
                 em.persist(teamB);
+                em.persist(group1);
 
                 for (int i = 0; i < 100; i++) {
                     Team selectedTeam = i % 2 == 0 ? teamA : teamB;
-                    em.persist(new Member("member" + i, selectedTeam, i));
+                    em.persist(new Member("member" + i, selectedTeam, i, group1));
                 }
             }
 

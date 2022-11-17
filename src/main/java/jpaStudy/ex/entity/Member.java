@@ -31,11 +31,11 @@ public class Member {
     @CollectionTable(name = "Address", joinColumns = @JoinColumn(name = "MEMBER_ID"))
     private List<Address> addressList;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "team_id")
     private Team team;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "group1_id")
     private Group1 group1;
 
@@ -47,11 +47,12 @@ public class Member {
         team.addMember(this);
         this.team = team;
     }
-    public Member(String name, Team team, int age){
+    public Member(String name, Team team, int age, Group1 group1){
         this.name = name;
         team.addMember(this);
         this.age = age;
         this.team = team;
+        this.group1 = group1;
     }
 
 
