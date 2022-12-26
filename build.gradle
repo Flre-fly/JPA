@@ -38,6 +38,8 @@ dependencies {
 	// 3. querydsl dependencies 추가
 	implementation "com.querydsl:querydsl-jpa:5.0.0"
 	implementation "com.querydsl:querydsl-apt:5.0.0"
+	//mariaDB
+	implementation group: 'org.mariadb.jdbc', name: 'mariadb-java-client', version: '2.4.1'
 }
 
 tasks.named('test') {

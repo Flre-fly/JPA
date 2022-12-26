@@ -47,12 +47,10 @@ public class PerformanceTest {
         hasNotRepository.findByMyParentId(1l);
 
         long endTime = System.currentTimeMillis();
-        //61
 
         long startTime1 = System.currentTimeMillis();
         repository.findJoin(1l);
         long endTime1 = System.currentTimeMillis();
-        //16
 
         System.out.println("-=-------------------------------------------");
         System.out.println(endTime - startTime);

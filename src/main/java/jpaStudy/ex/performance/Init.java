@@ -30,7 +30,7 @@ public class Init {
                 hasRepository.save(entity);
             }
             else{
-                HasNotAnnotationEntity entity = new HasNotAnnotationEntity("NOT" + i, parent.getId());
+                HasNotAnnotationEntity entity = new HasNotAnnotationEntity("NOT" + i, parent);
                 hasNotRepository.save(entity);
             }
         }

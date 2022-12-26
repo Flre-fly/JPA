@@ -17,13 +17,13 @@ public class HasNotAnnotationEntity {
 
     private String name;
 
-    private Long parentId;
 
-    @Transient
-    private MyParent parent;
+    @ManyToOne
+    @JoinColumn(name = "parent_id")
+    private MyParent myParent;
 
-    HasNotAnnotationEntity(String name, Long parentId){
+    HasNotAnnotationEntity(String name, MyParent parent){
         this.name = name;
-        this.parentId = parentId;
+        this.myParent = parent;
     }
 }

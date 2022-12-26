@@ -8,6 +8,6 @@ import java.util.List;
 
 public interface HasNotRepository extends JpaRepository<HasNotAnnotationEntity,Long> {
 
-    @Query("select n from HasNotAnnotationEntity n where n.parentId = :id")
+    @Query("select n from HasNotAnnotationEntity n where n.myParent.id = :id")
     List<HasNotAnnotationEntity> findByMyParentId(@Param(value = "id") Long id);
 }
