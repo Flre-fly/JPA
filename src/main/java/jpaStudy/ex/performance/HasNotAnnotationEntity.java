@@ -19,6 +19,9 @@ public class HasNotAnnotationEntity {
 
     private Long parentId;
 
+    @Transient
+    private MyParent parent;
+
     HasNotAnnotationEntity(String name, Long parentId){
         this.name = name;
         this.parentId = parentId;

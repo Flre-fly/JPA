@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Data
@@ -16,6 +17,11 @@ public class MyParent {
     private Long id;
 
     private String name;
+
+    @Transient
+    private List<HasAnnotationEntity> hasList;
+    @Transient
+    private List<HasNotAnnotationEntity> hasNotList;
 
     MyParent(String name){
         this.name = name;
